@@ -8,7 +8,6 @@ interface Post extends Model {
   title: string;
 }
 
-// TODO: need to fix cannot get initial data
 const db = new FileDB();
 await db.get<User>("users").insert({ username: "tinloklaw" });
 console.log(await db.get<User>("users").getById("kgagdpau"));
