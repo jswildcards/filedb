@@ -2,12 +2,10 @@ import { ensureFileSync, uuid } from "../deps.ts";
 import { Model } from "./model.ts";
 
 class Collection<T extends Model = Model> {
-  private name = "";
   private fsPath = "";
   private data: T[] = [];
 
   constructor(name: string, baseUrl: string) {
-    this.name = name;
     this.fsPath = `${baseUrl}/${name}.json`;
     ensureFileSync(this.fsPath);
     this.data = JSON.parse(Deno.readTextFileSync(this.fsPath) || "[]") as T[];
