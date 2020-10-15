@@ -1,6 +1,6 @@
 # FileDB
 
-A lightweight local JSON database for Deno.
+:zap: A lightweight local JSON database for Deno.
 
 ## Usage
 
