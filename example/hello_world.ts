@@ -1,16 +1,23 @@
-import { FileDB, Model } from "https://raw.githubusercontent.com/jswildcards/filedb/develop/mod.ts";
+import { FileDB, Model } from "../mod.ts";
 
 interface User extends Model {
-  username: string;
-}
-
-interface Post extends Model {
-  title: string;
+  username?: string;
 }
 
 const db = new FileDB();
-await db.get<User>("users").insert({ username: "tinloklaw" });
-console.log(await db.get<User>("users").get());
-await db.get<Post>("posts").insert({ title: "Hi I'm tinloklaw" });
-console.log(await db.get<Post>("posts").get());
+
+const users = db.get<User>("users");
+console.log(users.get());
+
+const id1 = users.insert({ username: "jswildcards" });
+const id2 = users.insert({ username: "jswildcards" });
 db.save();
+console.log(users.find({ username: "jswildcards" }));
+
+users.update(id1, { username: "ocodepoem" });
+db.save();
+console.log(users.find({ username: "jswildcards" }));
+
+users.delete(id2);
+db.save();
+console.log(users.get());
