@@ -2,6 +2,9 @@
 
 :zap: A lightweight local JSON database for Deno.
 
+[![nest badge](https://nest.land/badge.svg)](https://nest.land/package/filedb)
+![GitHub](https://img.shields.io/github/license/jswildcards/filedb)
+
 ## Usage
 
 For more examples, please go to [example](https://github.com/jswildcards/filedb/tree/main/example) folder.
