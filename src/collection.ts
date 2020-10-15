@@ -31,7 +31,7 @@ class Collection<T extends Model = Model> {
     el.createdAt = el.updatedAt = new Date();
     el.id = uuid.generate();
 
-    while(this.data.find((t) => t.id === el.id)) {
+    while (this.data.find((t) => t.id === el.id)) {
       el.id = uuid.generate();
     }
 
@@ -52,11 +52,12 @@ class Collection<T extends Model = Model> {
   }
 
   delete(id?: string) {
-    if(id)
-      this.data = this.data.filter(el => el.id !== id);
-    else
+    if (id) {
+      this.data = this.data.filter((el) => el.id !== id);
+    } else {
       this.data = [];
-    return { success: true}
+    }
+    return { success: true };
   }
 
   save() {
