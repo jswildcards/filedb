@@ -1,38 +1,31 @@
-import { ensureFileSync } from "../deps.ts";
+import { ensureDirSync } from "../deps.ts";
+import { Collection } from "./collection.ts";
+import { Model } from "./model.ts";
 
 class FileDB {
-  private fsPath = "./db.json";
-  private collections: Record<string, any[]> = {};
+  private fsPath = "./db";
+  private collections: Record<string, Collection> = {};
 
   constructor(fsPath?: string) {
-    if(fsPath)
+    if (fsPath) {
       this.fsPath = fsPath;
-
-    this.connect();
-  }
-
-  private connect() {
-    ensureFileSync(this.fsPath);
-    this.read();
-  }
-
-  public get(colName: string) {
-    if(!this.collections[colName]) {
-      this.collections = {
-        ...this.collections,
-        [colName]: []
-      }
     }
 
-    return this.collections[colName];
+    ensureDirSync(this.fsPath);
   }
 
-  public read() {
-    this.collections = JSON.parse(Deno.readTextFileSync(this.fsPath) || "{}");
+  get<T extends Model>(colName: string): Collection<T> {
+    const colIsExist = Object.keys(this.collections).includes(colName);
+
+    if (!colIsExist) {
+      this.collections[colName] = new Collection<T>(colName, this.fsPath);
+    }
+
+    return this.collections[colName] as Collection<T>;
   }
 
-  public snapshot() {
-    Deno.writeTextFileSync(this.fsPath, JSON.stringify(this.collections));
+  save() {
+    Object.values(this.collections).forEach((collection) => collection.save());
   }
 }
 

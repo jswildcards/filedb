@@ -1,6 +1,23 @@
-import { FileDB } from "../mod.ts";
+import { FileDB, Model } from "../mod.ts";
 
-const db = new FileDB("./db/master.json");
-db.get("users").push({ id: 1, username: "tinloklaw" });
-db.snapshot();
-console.log(db.get("users"));
+interface User extends Model {
+  username?: string;
+}
+
+const db = new FileDB();
+
+const users = db.get<User>("users");
+console.log(users.get());
+
+const id1 = users.insert({ username: "jswildcards" });
+const id2 = users.insert({ username: "jswildcards" });
+db.save();
+console.log(users.find({ username: "jswildcards" }));
+
+users.update(id1, { username: "ocodepoem" });
+db.save();
+console.log(users.find({ username: "jswildcards" }));
+
+users.delete(id2);
+db.save();
+console.log(users.get());
