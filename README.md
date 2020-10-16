@@ -1,9 +1,9 @@
 # FileDB
 
-:zap: A lightweight local JSON database for Deno.
-
 [![nest badge](https://nest.land/badge.svg)](https://nest.land/package/filedb)
 ![GitHub](https://img.shields.io/github/license/jswildcards/filedb)
+
+:zap: A lightweight local JSON database for Deno.
 
 ## Usage
 
@@ -26,11 +26,12 @@ const users = db.get<User>("users");
 console.log(users.get());
 
 // Insert records
-const id1 = users.insert({ username: "jswildcards" });
+const id1 = users.insert({ username: "jswildcards2" });
 const id2 = users.insert({ username: "jswildcards" });
+// You must save to changes to the database
 db.save();
-// find by Username
-console.log(users.find({ username: "jswildcards" }));
+// get all User
+console.log(users.get());
 
 // Update records
 users.update(id1, { username: "ocodepoem" });
@@ -41,6 +42,16 @@ console.log(users.find({ username: "jswildcards" }));
 // Delete record
 users.delete(id2);
 db.save();
-// find All User
+// get All User
 console.log(users.get());
 ```
+
+### Run the file
+
+```bash
+$ deno run --allow-read --allow-write --unstable main.ts
+```
+
+## API
+
+Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.1/mod.ts)
