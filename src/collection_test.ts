@@ -8,7 +8,7 @@ interface User extends Model {
 
 Deno.test("create files", function () {
   const collection = new Collection<User>("users", "./db");
-  assert(existsSync("./db/collection.json"));
+  assert(existsSync("./db/users.json"));
   assertEquals(collection.get(), []);
 });
 
