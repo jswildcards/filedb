@@ -7,25 +7,25 @@ interface User extends Model {
 }
 
 Deno.test("create files", function () {
-  const collection = new Collection<User>("users", "./db");
-  assert(existsSync("./db/users.json"));
+  const collection = new Collection<User>("users-col", "./db");
+  assert(existsSync("./db/users-col.json"));
   assertEquals(collection.get(), []);
 });
 
 Deno.test("empty set", function () {
-  const collection = new Collection<User>("users", "./db");
+  const collection = new Collection<User>("users-col", "./db");
   assertEquals(collection.get(), []);
 });
 
 Deno.test("insert data", function () {
-  const collection = new Collection<User>("users", "./db");
+  const collection = new Collection<User>("users-col", "./db");
   const user = collection.insert({ username: "user1" });
   collection.save();
   assertEquals(user!.username, "user1");
 });
 
 Deno.test("find", function () {
-  const collection = new Collection<User>("users", "./db");
+  const collection = new Collection<User>("users-col", "./db");
   const user = collection.find({ username: "user1" });
   assertEquals(user.length, 1);
 });
@@ -33,7 +33,7 @@ Deno.test("find", function () {
 // TODO: build test case for getById
 
 Deno.test("update", function () {
-  const collection = new Collection<User>("users", "./db");
+  const collection = new Collection<User>("users-col", "./db");
   const userFind = collection.find({ username: "user1" });
   const userId = userFind[0].id;
   const user = collection.update(userId!, { username: "user2" });
@@ -42,7 +42,7 @@ Deno.test("update", function () {
 });
 
 Deno.test("delete", function () {
-  const collection = new Collection<User>("users", "./db");
+  const collection = new Collection<User>("users-col", "./db");
   const userFind = collection.find({ username: "user2" });
   const userId = userFind[0].id;
   collection.delete(userId!);

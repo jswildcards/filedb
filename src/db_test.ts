@@ -23,6 +23,6 @@ Deno.test("db save", function () {
   users.insert({ username: "user1" });
   db.save();
   const db2 = new FileDB("./db");
-  const users2 = db2.get<User>("users");
+  db2.get<User>("users");
   assertEquals(users.get().length, 1);
 });
