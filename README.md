@@ -54,4 +54,4 @@ $ deno run --allow-read --allow-write --unstable main.ts
 
 ## API
 
-Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.1/mod.ts)
+Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.2/mod.ts)
