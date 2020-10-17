@@ -17,6 +17,14 @@
 - Familiar: the module is inspired by MongoDB, you can use this module just like you know that.
 - Suit with RESTful API: the module API is suited with RESTful API, you may refer to [this](https://github.com/jswildcards/filedb/blob/main/example/with_oak.ts) example.
 
+## Quick Start
+
+```bash
+$ git clone https://github.com/jswildcards/filedb.git
+$ cd ./filedb/example
+$ deno run --allow-read --allow-write hello_world.ts
+```
+
 ## Usage
 
 More examples can be found [here](https://github.com/jswildcards/filedb/tree/main/example).
