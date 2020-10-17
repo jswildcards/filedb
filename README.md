@@ -11,13 +11,9 @@
 - Familiar: the module is highly inspired by MongoDB, you can use this module just like you know that.
 - Suit with RESTful API: the module API is suited with RESTful API, you may refer to [this](https://github.com/jswildcards/filedb/blob/main/example/with_oak.ts) example.
 
-## Caution!
+## Contribution
 
-Although this module is highly inspired by MongoDB, it cannot provide features as rich as MongoDB at this moment. We will implement and release the inequality filters and aggregate functions as soon as possible. So stay tuned.
-
-This module is still unstable. So it may be varied largely.
-
-This module is only suitable for small-scaled projects. As when the database is large enough, it will be slow down with this file-based database structure.
+Contributing to this module is very welcome. Read this [guideline](https://github.com/jswildcards/filedb/blob/main/CONTRIBUTING.md).
 
 ## Usage
 
@@ -70,7 +66,7 @@ users.deleteOne({ firstName: "fancy" });
 users.deleteMany({});
 ```
 
-### Run the file
+### Run file
 
 ```bash
 $ deno run --allow-read --allow-write main.ts
@@ -80,6 +76,10 @@ $ deno run --allow-read --allow-write main.ts
 
 Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.4/mod.ts)
 
-## Contribution
+## Caution!
 
-Contributing to this module is very welcome. Read this [guideline](https://github.com/jswildcards/filedb/blob/main/CONTRIBUTING.md).
+Although this module is highly inspired by MongoDB, it cannot provide features as rich as MongoDB at this moment. We will implement and release the inequality filters and aggregate functions as soon as possible. So stay tuned.
+
+This module is still unstable. So it may be varied largely.
+
+This module is only suitable for small-scaled projects. As when the database is large enough, it will be slow down with this file-based database structure.
