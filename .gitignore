@@ -1,4 +1,2 @@
 db
-.eggignore
-egg.yml
-.env
+data

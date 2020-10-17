@@ -1,0 +1,8 @@
+.eggignore
+.git
+.github
+.gitignore
+.vscode
+CODE_OF_CONDUCT.md
+LICENSE
+egg.yml

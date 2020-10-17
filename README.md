@@ -5,53 +5,81 @@
 
 :zap: A lightweight local JSON database for Deno.
 
+## Why Use FileDB?
+
+- Simplicity: the module is semantic and easy to use.
+- Familiar: the module is highly inspired by MongoDB, you can use this module just like you know that.
+- Suit with RESTful API: the module API is suited with RESTful API, you may refer to [this](https://github.com/jswildcards/filedb/blob/main/example/with_oak.ts) example.
+
+## Caution!
+
+Although this module is highly inspired by MongoDB, it cannot provide features as rich as MongoDB at this moment. We will implement and release the inequality filters and aggregate functions as soon as possible. So stay tuned.
+
+This module is still unstable. So it may be varied largely.
+
+This module is only suitable for small-scaled projects. As when the database is large enough, it will be slow down with this file-based database structure.
+
 ## Usage
 
-For more examples, please go to [example](https://github.com/jswildcards/filedb/tree/main/example) folder.
+More examples can be found [here](https://github.com/jswildcards/filedb/tree/main/example).
 
 ```ts
 // main.ts
 import { FileDB, Model } from "https://raw.githubusercontent.com/jswildcards/filedb/main/mod.ts";
 
-// define User collection
 interface User extends Model {
-  username?: string;
+  firstName?: string;
+  lastName?: string;
+  favourites?: string[];
 }
 
-// create a new FileDB instance
-const db = new FileDB();
+FileDB.drop("./data"); // drop database
+const db = new FileDB("./data", { autosave: true }); // create database with autosave
+const users = db.getCollection<User>("users"); // get User collection
 
-// get User collection
-const users = db.get<User>("users");
-console.log(users.get());
+// insert users
+users.insertOne({
+  firstName: "fancy",
+  lastName: "foo",
+  favourites: ["🍎 Apple", "🍐 Pear"],
+});
 
-// Insert records
-const id1 = users.insert({ username: "jswildcards2" });
-const id2 = users.insert({ username: "jswildcards" });
-// You must save to changes to the database
-db.save();
-// get all User
-console.log(users.get());
+users.insertMany([
+  {
+    firstName: "betty",
+    lastName: "bar",
+    favourites: undefined,
+  },
+  {
+    firstName: "benson",
+    lastName: "baz",
+    favourites: undefined,
+  },
+]);
 
-// Update records
-users.update(id1, { username: "ocodepoem" });
-db.save();
-// find by Username
-console.log(users.find({ username: "jswildcards" }));
+// get users
+console.log(users.find({}));
+console.log(users.findOne({ firstName: "fancy" }));
 
-// Delete record
-users.delete(id2);
-db.save();
-// get All User
-console.log(users.get());
+// update users
+users.updateOne({ firstName: "fancy" }, { lastName: "bar" });
+users.updateMany({ favourites: undefined }, { favourites: ["🍌 Banana"] });
+
+// delete users
+users.deleteOne({ firstName: "fancy" });
+users.deleteMany({});
 ```
 
 ### Run the file
 
 ```bash
-$ deno run --allow-read --allow-write --unstable main.ts
+$ deno run --allow-read --allow-write main.ts
 ```
 
 ## API
 
-Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.2/mod.ts)
+Please see the [documentation](https://doc.deno.land/https/x.nest.land/filedb@0.0.4/mod.ts)
+
+## Contribution
+
+Contributing to this module is very welcome. Read this [guideline](https://github.com/jswildcards/filedb/blob/main/CONTRIBUTING.md).

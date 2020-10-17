@@ -2,5 +2,7 @@
   "deno.enable": true,
   "deno.import_intellisense_origins": {
     "https://deno.land": true
-  }
+  },
+  "editor.detectIndentation": true,
+  "editor.tabSize": 2
 }

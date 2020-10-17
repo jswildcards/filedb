@@ -1,0 +1,13 @@
+name: filedb
+description: ⚡ A lightweight local JSON database for Deno.
+repository: 'https://github.com/jswildcards/filedb'
+unstable: true
+version: 0.0.3
+checkAll: true
+unlisted: false
+files:
+  - ./mod.ts
+  - ./deps.ts
+  - ./README.md
+  - ./src/**/*
+  - ./example/**/*

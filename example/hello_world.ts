@@ -1,23 +1,42 @@
-import { FileDB, Model } from "../mod.ts";
+import { FileDB, Document } from "../mod.ts";
 
-interface User extends Model {
-  username?: string;
+interface User extends Document {
+  firstName?: string;
+  lastName?: string;
+  favourites?: string[];
 }
 
-const db = new FileDB();
+FileDB.drop("./data");
+const db = new FileDB("./data", { autosave: true });
+const users = db.getCollection<User>("users");
 
-const users = db.get<User>("users");
-console.log(users.get());
+users.insertOne({
+  firstName: "fancy",
+  lastName: "foo",
+  favourites: ["🍎 Apple", "🍐 Pear"],
+});
 
-const { id: id1 } = users.insert({ username: "jswildcards" })!;
-const { id: id2 } = users.insert({ username: "jswildcards" })!;
-db.save();
-console.log(users.find({ username: "jswildcards" }));
+// if autosave option is unset or set to false, you need the code below to save data
+// db.save();
 
-users.update(id1!, { username: "ocodepoem" });
-db.save();
-console.log(users.find({ username: "jswildcards" }));
+users.insertMany([
+  {
+    firstName: "betty",
+    lastName: "bar",
+    favourites: undefined,
+  },
+  {
+    firstName: "benson",
+    lastName: "baz",
+    favourites: undefined,
+  },
+]);
 
-users.delete(id2!);
-db.save();
-console.log(users.get());
+console.log(users.find({}));
+console.log(users.findOne({ firstName: "fancy" }));
+
+users.updateOne({ firstName: "fancy" }, { lastName: "bar" });
+users.updateMany({ favourites: undefined }, { favourites: ["🍌 Banana"] });
+
+users.deleteOne({ firstName: "fancy" });
+users.deleteMany({});
