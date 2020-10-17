@@ -79,7 +79,6 @@ export class Collection<T extends Document = Document> {
     return this.findOne({ id: el.id } as T);
   }
 
-
   /**
    * Bulk Insert
    * 
