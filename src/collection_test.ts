@@ -1,31 +1,30 @@
 import { Collection } from "./collection.ts";
-import { Model } from "./model.ts";
+import { Document } from "./document.ts";
 import { assert, assertEquals, existsSync } from "../deps.ts";
 
-interface User extends Model {
+interface User extends Document {
   username?: string;
 }
 
 Deno.test("create files", function () {
-  const collection = new Collection<User>("users-col", "./db");
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
   assert(existsSync("./db/users-col.json"));
-  assertEquals(collection.get(), []);
 });
 
 Deno.test("empty set", function () {
-  const collection = new Collection<User>("users-col", "./db");
-  assertEquals(collection.get(), []);
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
+  assertEquals(collection.find({}), []);
 });
 
 Deno.test("insert data", function () {
-  const collection = new Collection<User>("users-col", "./db");
-  const user = collection.insert({ username: "user1" });
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
+  const user = collection.insertOne({ username: "user1" });
   collection.save();
   assertEquals(user!.username, "user1");
 });
 
 Deno.test("find", function () {
-  const collection = new Collection<User>("users-col", "./db");
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
   const user = collection.find({ username: "user1" });
   assertEquals(user.length, 1);
 });
@@ -33,19 +32,19 @@ Deno.test("find", function () {
 // TODO: build test case for getById
 
 Deno.test("update", function () {
-  const collection = new Collection<User>("users-col", "./db");
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
   const userFind = collection.find({ username: "user1" });
   const userId = userFind[0].id;
-  const user = collection.update(userId!, { username: "user2" });
+  const user = collection.updateOne({ id: userId }, { username: "user2" });
   collection.save();
   assertEquals(user?.username, "user2");
 });
 
 Deno.test("delete", function () {
-  const collection = new Collection<User>("users-col", "./db");
+  const collection = new Collection<User>("users-col", { rootDir: "./db" });
   const userFind = collection.find({ username: "user2" });
   const userId = userFind[0].id;
-  collection.delete(userId!);
+  collection.deleteOne({ id: userId });
   collection.save();
-  assertEquals(collection.get().length, 0);
+  assertEquals(collection.find({}).length, 0);
 });

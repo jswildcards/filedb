@@ -1,8 +1,21 @@
 import { ensureFileSync, uuid } from "../deps.ts";
-import { Model } from "./model.ts";
+import { Document } from "./document.ts";
 
-export class Collection<T extends Model = Model> {
+/**
+ * @property rootDir: the root directory to store data
+ * @property autosave: is autosave enabled when collection is changed
+ */
+export interface CollectionOptions {
+  rootDir: string;
+  autosave?: boolean;
+}
+
+/**
+ * A Collection to store data
+ */
+export class Collection<T extends Document = Document> {
   private fsPath = "";
+  private autosave = false;
   private data: T[] = [];
 
   /**
@@ -11,27 +24,13 @@ export class Collection<T extends Model = Model> {
    * 
    * @constructor
    * @param name the Collection name
-   * @param baseUrl the local base url of data folder
+   * @param collectionOptions 
    */
-  constructor(name: string, baseUrl: string) {
-    this.fsPath = `${baseUrl}/${name}.json`;
+  constructor(name: string, collectionOptions: CollectionOptions) {
+    this.fsPath = `${collectionOptions.rootDir}/${name}.json`;
     ensureFileSync(this.fsPath);
     this.data = JSON.parse(Deno.readTextFileSync(this.fsPath) || "[]") as T[];
-  }
-
-  /**
-   * Get all documents of the collections
-   */
-  get() {
-    return this.data;
-  }
-
-  /**
-   * Get one document by using document ID
-   * @param id the document ID
-   */
-  getById(id: string) {
-    return this.data.find((el) => el.id === id);
+    this.autosave = collectionOptions?.autosave ?? false;
   }
 
   /**
@@ -43,6 +42,7 @@ export class Collection<T extends Model = Model> {
    * for newer version
    * 
    * @param options filter conditions
+   * @return the filtered documents
    */
   find(options: T) {
     return this.data.filter((el) => {
@@ -52,16 +52,17 @@ export class Collection<T extends Model = Model> {
     });
   }
 
+  findOne(options: T) {
+    return this.find(options)?.[0];
+  }
+
   /**
    * Insert a document
    * 
-   * Caution! In this stage we have not supported bulk insert
-   * yet.
-   * 
    * @param el the document to be inserted
-   * @returns the inserted document ID
+   * @return the inserted document
    */
-  insert(el: T) {
+  insertOne(el: T) {
     el.createdAt = el.updatedAt = new Date();
     el.id = uuid.generate();
 
@@ -70,46 +71,117 @@ export class Collection<T extends Model = Model> {
     }
 
     this.data = [...this.data, el];
-    return this.getById(el.id!);
+
+    if (this.autosave) {
+      this.save();
+    }
+
+    return this.findOne({ id: el.id } as T);
+  }
+
+
+  /**
+   * Bulk Insert
+   * 
+   * @param els an array of documents to be inserted
+   * @return the inserted documents
+   */
+  insertMany(els: T[]) {
+    els.forEach((el) => {
+      this.insertOne(el);
+    });
+
+    if (this.autosave) {
+      this.save();
+    }
+
+    return els.map((el) => this.findOne({ id: el.id } as T));
   }
 
   /**
    * Update a document
    * 
-   * Caution! In this stage we have not supported bulk
-   * update yet.
-   * 
-   * @param id the document ID to be updated
+   * @param options filter condition of documents
    * @param el the updated document attributes
-   * @returns the updated document object
+   * @return the updated document
    */
-  update(id: string, el: T) {
-    let t = this.getById(id);
+  updateOne(options: T, el: T) {
+    let t = this.findOne(options);
     t = {
       ...t,
       ...el,
       updatedAt: new Date(),
     };
-    const index = this.data.findIndex((el) => el.id === id);
+    const index = this.data.findIndex((el) => el.id === t.id);
     this.data[index] = t;
-    return this.getById(id);
+
+    if (this.autosave) {
+      this.save();
+    }
+
+    return this.findOne({ id: t.id } as T);
   }
 
   /**
-   * Delete a document when an ID is provided. Otherwise
-   * delete the whole collection
+   * Bulk Update
    * 
-   * @param id Optional: the document ID to be deleted
-   * @returns an object indicates success
+   * @param options filter condition of documents
+   * @param el the updated document attributes
+   * @return the updated documents
    */
-  delete(id?: string) {
-    if (id) {
-      this.data = this.data.filter((el) => el.id !== id);
-    } else {
-      this.data = [];
+  updateMany(options: T, el: T) {
+    let indices: string[] = [];
+    let ts = this.find(options);
+    ts.forEach((t) => {
+      t = {
+        ...t,
+        ...el,
+        updatedAt: new Date(),
+      };
+      const index = this.data.findIndex((el) => el.id === t.id);
+      this.data[index] = t;
+      indices = [...indices, t.id!];
+    });
+
+    if (this.autosave) {
+      this.save();
     }
 
-    return { success: true };
+    return indices.map((id) => this.find({ id } as T));
+  }
+
+  /**
+   * Delete a document
+   * 
+   * @param options Filter conditions of documents
+   * @return the deleted document ID
+   */
+  deleteOne(options: T) {
+    const t = this.findOne(options);
+    this.data = this.data.filter((el) => el.id !== t.id);
+
+    if (this.autosave) {
+      this.save();
+    }
+
+    return t.id;
+  }
+
+  /**
+   * Bulk delete
+   * 
+   * @param options Filter conditions of documents
+   * @return the deleted document IDs
+   */
+  deleteMany(options: T) {
+    const ts = this.find(options);
+    this.data = this.data.filter((el) => !ts.includes(el));
+
+    if (this.autosave) {
+      this.save();
+    }
+
+    return ts.map((t) => t.id);
   }
 
   /**
