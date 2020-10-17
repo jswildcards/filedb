@@ -25,9 +25,9 @@ More examples can be found [here](https://github.com/jswildcards/filedb/tree/mai
 
 ```ts
 // main.ts
-import { FileDB, Model } from "https://raw.githubusercontent.com/jswildcards/filedb/main/mod.ts";
+import { FileDB, Document } from "https://raw.githubusercontent.com/jswildcards/filedb/main/mod.ts";
 
-interface User extends Model {
+interface User extends Document {
   firstName?: string;
   lastName?: string;
   favourites?: string[];
