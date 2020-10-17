@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { Document, FileDB } from "../mod.ts";
+import { Document, FileDB } from "https://deno.land/x/filedb@0.0.4/mod.ts";
 
 interface User extends Document {
   username?: string;

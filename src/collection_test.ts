@@ -7,7 +7,7 @@ interface User extends Document {
 }
 
 Deno.test("create files", function () {
-  const collection = new Collection<User>("users-col", { rootDir: "./db" });
+  new Collection<User>("users-col", { rootDir: "./db" });
   assert(existsSync("./db/users-col.json"));
 });
 
