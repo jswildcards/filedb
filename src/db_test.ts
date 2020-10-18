@@ -6,6 +6,11 @@ interface User extends Document {
   username?: string;
 }
 
+Deno.test("drop db", function() {
+  FileDB.drop("./db");
+  assert(!existsSync("./db"));
+});
+
 Deno.test("create folder", function () {
   new FileDB("./db");
   assert(existsSync("./db"));
@@ -18,6 +23,7 @@ Deno.test("get collection", function () {
 });
 
 Deno.test("db save", function () {
+  FileDB.drop("./db");
   const db = new FileDB("./db");
   const users = db.getCollection<User>("users");
   users.insertOne({ username: "user1" });
@@ -25,4 +31,11 @@ Deno.test("db save", function () {
   const db2 = new FileDB("./db");
   db2.getCollection<User>("users");
   assertEquals(users.find({}).length, 1);
+});
+
+Deno.test("no collections", function() {
+  FileDB.drop("./db");
+  const db = new FileDB("./db");
+  assertEquals(db.getCollectionNames().length, 0);
+  FileDB.drop("./db");
 });
