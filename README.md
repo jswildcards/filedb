@@ -5,6 +5,7 @@
 ![GitHub Release Date](https://img.shields.io/github/release-date/jswildcards/filedb)
 ![GitHub top language](https://img.shields.io/github/languages/top/jswildcards/filedb)
 ![LGTM Grade](https://img.shields.io/lgtm/grade/javascript/github/jswildcards/filedb)
+![deno-code-coverage](https://img.shields.io/badge/code%20coverage-77.08%25-yellowgreen.svg)
 ![GitHub Repo stars](https://img.shields.io/github/stars/jswildcards/filedb?style=social)
 ![GitHub](https://img.shields.io/github/license/jswildcards/filedb)
 [![nest badge](https://nest.land/badge.svg)](https://nest.land/package/filedb)
