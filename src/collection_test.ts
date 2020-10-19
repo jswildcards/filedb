@@ -1,5 +1,6 @@
 import { Collection } from "./collection.ts";
 import { Document } from "./document.ts";
+import { FileDB } from "./db.ts";
 import { assert, assertEquals, existsSync } from "../deps.ts";
 
 interface User extends Document {
@@ -47,4 +48,5 @@ Deno.test("delete", function () {
   collection.deleteOne({ id: userId });
   collection.save();
   assertEquals(collection.find({}).length, 0);
+  FileDB.drop("./db");
 });
