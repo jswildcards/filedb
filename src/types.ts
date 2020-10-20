@@ -10,4 +10,12 @@ export interface Document {
   updatedAt?: Date;
 }
 
-export default Document;
+/**
+ * @property autosave: is autosave enabled when database is changed
+ */
+export interface FileDBOptions {
+  rootDir?: string;
+  isAutosave?: boolean;
+}
+
+export type Selector<T> = T | ((document: T) => boolean | undefined);

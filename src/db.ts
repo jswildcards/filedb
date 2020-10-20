@@ -1,21 +1,13 @@
-import { ensureDirSync, existsSync } from "../deps.ts";
 import { Collection } from "./collection.ts";
-import { Document } from "./document.ts";
-
-/**
- * @property autosave: is autosave enabled when database is changed
- */
-export interface FileDBOptions {
-  autosave?: boolean;
-}
+import { Document, FileDBOptions } from "./types.ts";
+import { DBFileSystem } from "./fs.ts";
 
 /**
  * The Database
  */
 export class FileDB {
-  private rootDir = "./db";
-  private autosave = false;
-  private collections: Record<string, Collection> = {};
+  private collections: Record<string, Collection<any>> = {};
+  private fs: DBFileSystem;
 
   /**
    * Ensure the data folder is existed.
@@ -23,33 +15,29 @@ export class FileDB {
    * @constructor
    * @param rootDir Optional: the base url of the data folder, default "./db"
    */
-  constructor(rootDir?: string, dbOptions?: FileDBOptions) {
-    if (rootDir) {
-      this.rootDir = rootDir;
-    }
-
-    this.autosave = dbOptions?.autosave ?? false;
-    ensureDirSync(this.rootDir);
+  constructor(dbOptions?: FileDBOptions) {
+    this.fs = new DBFileSystem(dbOptions);
   }
 
   /**
    * Get a collection
    * 
-   * @param colName Collection Name
+   * @param collectionName Collection Name
    * @template T a type extending Collection Model
    * @return the specified collection
    */
-  getCollection<T extends Document>(colName: string): Collection<T> {
-    const colIsExist = Object.keys(this.collections).includes(colName);
+  async getCollection<T extends Document>(collectionName: string) {
+    const isCollectionExist = this.collections?.[collectionName] ?? null;
 
-    if (!colIsExist) {
-      this.collections[colName] = new Collection<T>(
-        colName,
-        { rootDir: this.rootDir, autosave: this.autosave },
+    if (!isCollectionExist) {
+      this.collections[collectionName] = new Collection<T>(
+        collectionName,
+        this.fs,
       );
+      await this.collections[collectionName].init();
     }
 
-    return this.collections[colName] as Collection<T>;
+    return this.collections[collectionName] as Collection<T>;
   }
 
   /**
@@ -64,18 +52,23 @@ export class FileDB {
   /**
    * Save all data of all collections
    */
-  save() {
-    Object.values(this.collections).forEach((collection) => collection.save());
+  async save() {
+    return Promise.all(
+      Object.values(this.collections).map((collection) => collection.save()),
+    );
   }
 
   /**
    * Drop a database with the given path
    * @param rootDir root directory of the database
    */
-  static drop(rootDir: string) {
-    if (existsSync(rootDir)) {
-      Deno.removeSync(rootDir, { recursive: true });
-    }
+  async drop(silence: boolean = false) {
+    return this.fs.deregister().catch((err) => {
+      if (!silence) {
+        console.error(err);
+      }
+      return Promise.resolve(err);
+    });
   }
 }
 

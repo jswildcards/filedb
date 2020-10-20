@@ -40,8 +40,7 @@ interface User extends Document {
   favourites?: string[];
 }
 
-FileDB.drop("./data"); // drop database
-const db = new FileDB("./data", { autosave: true }); // create database with autosave
+const db = new FileDB({ rootDir: "./data", isAutosave: true }); // create database with autosave
 const users = db.getCollection<User>("users"); // get User collection
 
 // insert users
@@ -55,26 +54,35 @@ users.insertMany([
   {
     firstName: "betty",
     lastName: "bar",
-    favourites: undefined,
+    favourites: ["🍌 Banana"],
   },
   {
     firstName: "benson",
     lastName: "baz",
-    favourites: undefined,
+    favourites: ["🍌 Banana"],
   },
 ]);
 
 // get users
-console.log(users.find({}));
+console.log(users.find((el) => el.lastName?.includes("ba")).value());
 console.log(users.findOne({ firstName: "fancy" }));
 
 // update users
-users.updateOne({ firstName: "fancy" }, { lastName: "bar" });
-users.updateMany({ favourites: undefined }, { favourites: ["🍌 Banana"] });
+await users.updateOne(
+  (el) => el.favourites?.[0] === "🍌 Banana",
+  { favourites: ["🍎 Apple", "🍐 Pear"] },
+);
+await users.updateMany(
+  (el) => el.lastName?.includes("ba"),
+  { favourites: ["🍉 Watermelon"] },
+);
 
 // delete users
 users.deleteOne({ firstName: "fancy" });
-users.deleteMany({});
+await users.deleteMany((el) => (el.favourites?.length ?? []) >= 1);
+
+// drop database
+await db.drop();
 ```
 
 ### Run file

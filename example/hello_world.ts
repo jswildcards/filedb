@@ -1,4 +1,4 @@
-import { Document, FileDB } from "https://deno.land/x/filedb@0.0.4/mod.ts";
+import { Document, FileDB } from "../mod.ts";
 
 interface User extends Document {
   firstName?: string;
@@ -6,11 +6,12 @@ interface User extends Document {
   favourites?: string[];
 }
 
-FileDB.drop("./data");
-const db = new FileDB("./data", { autosave: true });
-const users = db.getCollection<User>("users");
+const db = new FileDB({ rootDir: "./data", isAutosave: true });
+// Notice the error message in console
+await db.drop();
+const users = await db.getCollection<User>("users");
 
-users.insertOne({
+await users.insertOne({
   firstName: "fancy",
   lastName: "foo",
   favourites: ["🍎 Apple", "🍐 Pear"],
@@ -19,24 +20,31 @@ users.insertOne({
 // if autosave option is unset or set to false, you need the code below to save data
 // db.save();
 
-users.insertMany([
+await users.insertMany([
   {
     firstName: "betty",
     lastName: "bar",
-    favourites: undefined,
+    favourites: ["🍌 Banana"],
   },
   {
     firstName: "benson",
     lastName: "baz",
-    favourites: undefined,
+    favourites: ["🍌 Banana"],
   },
 ]);
 
-console.log(users.find({}));
+console.log(users.find((el) => el.lastName?.includes("ba")).value());
 console.log(users.findOne({ firstName: "fancy" }));
 
-users.updateOne({ firstName: "fancy" }, { lastName: "bar" });
-users.updateMany({ favourites: undefined }, { favourites: ["🍌 Banana"] });
+await users.updateOne(
+  (el) => el.favourites?.[0] === "🍌 Banana",
+  { favourites: ["🍎 Apple", "🍐 Pear"] },
+);
+await users.updateMany(
+  (el) => el.lastName?.includes("ba"),
+  { favourites: ["🍉 Watermelon"] },
+);
 
-users.deleteOne({ firstName: "fancy" });
-users.deleteMany({});
+await users.deleteOne({ firstName: "fancy" });
+await users.deleteMany((el) => (el.favourites?.length ?? []) >= 1);
+await db.drop();
