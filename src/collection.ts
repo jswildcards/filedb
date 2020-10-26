@@ -1,193 +1,184 @@
-import { ensureFileSync, uuid } from "../deps.ts";
-import { Document } from "./document.ts";
+import { uuid } from "../deps.ts";
+import { Document, Selector } from "./types.ts";
+import { FileSystemManager } from "./fsmanager.ts";
+import { Dataset } from "./dataset.ts";
 
 /**
- * @property rootDir: the root directory to store data
- * @property autosave: is autosave enabled when collection is changed
+ * A collection to store data
+ * @property {string} name - collection name
+ * @property {T[]} data - the collection data stored
+ * @property {FileSystemManager} fsManager - the file system manager of database
  */
-export interface CollectionOptions {
-  rootDir: string;
-  autosave?: boolean;
-}
-
-/**
- * A Collection to store data
- */
-export class Collection<T extends Document = Document> {
-  private fsPath = "";
-  private autosave = false;
+export class Collection<T extends Document> {
+  private name = "";
   private data: T[] = [];
+  private fsManager: FileSystemManager;
 
   /**
    * Ensure the collection file is existed. Read the initial
    * data from the file if the file existed.
    * 
    * @constructor
-   * @param name the Collection name
-   * @param collectionOptions 
+   * @param {string} name - the Collection name
    */
-  constructor(name: string, collectionOptions: CollectionOptions) {
-    this.fsPath = `${collectionOptions.rootDir}/${name}.json`;
-    ensureFileSync(this.fsPath);
-    this.data = JSON.parse(Deno.readTextFileSync(this.fsPath) || "[]") as T[];
-    this.autosave = collectionOptions?.autosave ?? false;
+  constructor(name: string, fsManager: FileSystemManager) {
+    this.name = name;
+    this.fsManager = fsManager;
+  }
+
+  async init() {
+    await this.fsManager.register(this.name);
+    this.data = JSON.parse(await this.fsManager.read(this.name) || "[]");
+    return this.fsManager.write(this.name, this.data);
   }
 
   /**
    * Find some documents by using filter conditions
    * 
-   * Caution! The method on this stage is only able to 
-   * find documents with equals properties. For more options
-   * like greater than, less than or equal to, please wait
-   * for newer version
-   * 
-   * @param options filter conditions
+   * @param selector filter conditions
    * @return the filtered documents
    */
-  find(options: T) {
-    return this.data.filter((el) => {
-      return Object.keys(options).every((key) => {
-        return options[key as keyof T] === el[key as keyof T];
+  find(selector: Selector<T>) {
+    if (selector instanceof Function) {
+      return new Dataset(this.data.filter(selector));
+    }
+
+    return new Dataset(this.data.filter((el) => {
+      return Object.keys(selector).every((key) => {
+        return selector[key as keyof T] === el[key as keyof T];
       });
-    });
+    }));
+  }
+  /**
+   * Find one document by using filter conditions
+   * @param selector filter conditions
+   * @return the filtered document
+   */
+  findOne(selector: Selector<T>) {
+    return this.find(selector)?.value()?.[0];
   }
 
-  findOne(options: T) {
-    return this.find(options)?.[0];
+  private insert(document: T) {
+    document.createdAt = document.updatedAt = new Date();
+    document.id = uuid.generate();
+
+    while (this.data.find((t) => t.id === document.id)) {
+      document.id = uuid.generate();
+    }
+
+    this.data = [...this.data, document];
+    return this.findOne({ id: document.id } as T);
   }
 
   /**
    * Insert a document
    * 
-   * @param el the document to be inserted
+   * @param document the document to be inserted
    * @return the inserted document
    */
-  insertOne(el: T) {
-    el.createdAt = el.updatedAt = new Date();
-    el.id = uuid.generate();
-
-    while (this.data.find((t) => t.id === el.id)) {
-      el.id = uuid.generate();
-    }
-
-    this.data = [...this.data, el];
-
-    if (this.autosave) {
-      this.save();
-    }
-
-    return this.findOne({ id: el.id } as T);
+  async insertOne(document: T) {
+    const inserted = this.insert(document);
+    await this.autosave();
+    return inserted;
   }
 
   /**
    * Bulk Insert
    * 
-   * @param els an array of documents to be inserted
+   * @param documents an array of documents to be inserted
    * @return the inserted documents
    */
-  insertMany(els: T[]) {
-    els.forEach((el) => {
-      this.insertOne(el);
-    });
+  async insertMany(documents: T[]) {
+    const inserted = documents.map((el) => this.insert(el));
+    await this.autosave();
+    return new Dataset(inserted);
+  }
 
-    if (this.autosave) {
-      this.save();
-    }
-
-    return els.map((el) => this.findOne({ id: el.id } as T));
+  private update(oldDocument: T, document: T) {
+    const updated = {
+      ...oldDocument,
+      ...document,
+      updatedAt: new Date(),
+    };
+    const index = this.data.findIndex(({ id }) => id === updated.id);
+    this.data[index] = updated;
+    return updated.id;
   }
 
   /**
    * Update a document
    * 
-   * @param options filter condition of documents
-   * @param el the updated document attributes
+   * @param selector filter condition of documents
+   * @param document the updated document attributes
    * @return the updated document
    */
-  updateOne(options: T, el: T) {
-    let t = this.findOne(options);
-    t = {
-      ...t,
-      ...el,
-      updatedAt: new Date(),
-    };
-    const index = this.data.findIndex((el) => el.id === t.id);
-    this.data[index] = t;
+  async updateOne(selector: Selector<T>, document: T) {
+    const selected = this.findOne(selector);
+    const updatedId = this.update(selected, document);
+    await this.autosave();
 
-    if (this.autosave) {
-      this.save();
-    }
-
-    return this.findOne({ id: t.id } as T);
+    return this.findOne({ id: updatedId } as T);
   }
 
   /**
    * Bulk Update
    * 
-   * @param options filter condition of documents
-   * @param el the updated document attributes
+   * @param {Selector<T>} selector - filter condition of documents
+   * @param {T} document - the updated document attributes
    * @return the updated documents
    */
-  updateMany(options: T, el: T) {
-    let indices: string[] = [];
-    let ts = this.find(options);
-    ts.forEach((t) => {
-      t = {
-        ...t,
-        ...el,
-        updatedAt: new Date(),
-      };
-      const index = this.data.findIndex((el) => el.id === t.id);
-      this.data[index] = t;
-      indices = [...indices, t.id!];
-    });
+  async updateMany(selector: Selector<T>, document: T) {
+    const selected = this.find(selector);
+    const updatedIds = selected.value().map((oldDocument: T) =>
+      this.update(oldDocument, document)
+    );
+    await this.autosave();
 
-    if (this.autosave) {
-      this.save();
-    }
-
-    return indices.map((id) => this.find({ id } as T));
+    return new Dataset(updatedIds.map((id) => this.findOne({ id } as T)));
   }
 
   /**
    * Delete a document
    * 
-   * @param options Filter conditions of documents
-   * @return the deleted document ID
+   * @param {Selector<T>} selector Filter conditions of documents
+   * @return {string} the deleted document ID
    */
-  deleteOne(options: T) {
-    const t = this.findOne(options);
-    this.data = this.data.filter((el) => el.id !== t.id);
+  async deleteOne(selector: Selector<T>) {
+    const document = this.findOne(selector);
+    this.data = this.data.filter(({ id }) => id !== document.id);
+    await this.autosave();
 
-    if (this.autosave) {
-      this.save();
-    }
-
-    return t.id;
+    return document.id;
   }
 
   /**
    * Bulk delete
    * 
-   * @param options Filter conditions of documents
-   * @return the deleted document IDs
+   * @param {Selector<T>} selector - Filter conditions of documents
+   * @return {string[]} the deleted document IDs
    */
-  deleteMany(options: T) {
-    const ts = this.find(options);
-    this.data = this.data.filter((el) => !ts.includes(el));
+  async deleteMany(selector: Selector<T>) {
+    const documents = this.find(selector).value();
+    this.data = this.data.filter((el) => !documents.includes(el));
+    await this.autosave();
 
-    if (this.autosave) {
-      this.save();
-    }
-
-    return ts.map((t) => t.id);
+    return documents.map((t: T) => t.id);
   }
 
   /**
    * Save a copy of the data snapshot at this point to the file.
    */
-  save() {
-    Deno.writeTextFileSync(this.fsPath, JSON.stringify(this.data));
+  async save() {
+    return this.fsManager.write(this.name, this.data);
+  }
+
+  /**
+   * Autosave data when inserting, updating and deleting data
+   */
+  async autosave() {
+    return this.fsManager.autowrite(this.name, this.data).catch((err) =>
+      Promise.resolve(err)
+    );
   }
 }
 

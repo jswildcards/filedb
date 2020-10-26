@@ -1,41 +1,63 @@
+import { assertEquals, exists } from "../deps.ts";
 import { FileDB } from "./db.ts";
-import { assert, assertEquals, existsSync } from "../deps.ts";
-import { Document } from "./document.ts";
+import { Document } from "./types.ts";
 
 interface User extends Document {
   username?: string;
 }
 
-Deno.test("drop db", function() {
-  FileDB.drop("./db");
-  assert(!existsSync("./db"));
+const collectionName = "users";
+const rootDirs = ["./db", "./data"];
+const ext = ".json";
+
+Deno.test("db: getCollection", async function () {
+  const db = new FileDB();
+  const collection = await db.getCollection<User>(collectionName);
+  assertEquals(collection.find({}).value(), []);
+  assertEquals(await exists(`${rootDirs[0]}/${collectionName + ext}`), true);
 });
 
-Deno.test("create folder", function () {
-  new FileDB("./db");
-  assert(existsSync("./db"));
+Deno.test("db: getCollectionNames(empty)", async function () {
+  const db = new FileDB();
+  const names = db.getCollectionNames();
+  assertEquals(names.length, 0);
 });
 
-Deno.test("get collection", function () {
-  const db = new FileDB("./db");
-  db.getCollection<User>("users");
-  assert(existsSync("./db/users.json"));
+Deno.test("db: getCollectionNames(not empty)", async function () {
+  const db = new FileDB();
+  await db.getCollection<User>(collectionName);
+  const names = db.getCollectionNames();
+  assertEquals(names.length, 1);
+  assertEquals(names?.[0], collectionName);
 });
 
-Deno.test("db save", function () {
-  FileDB.drop("./db");
-  const db = new FileDB("./db");
-  const users = db.getCollection<User>("users");
-  users.insertOne({ username: "user1" });
-  db.save();
-  const db2 = new FileDB("./db");
-  db2.getCollection<User>("users");
-  assertEquals(users.find({}).length, 1);
+Deno.test("db: save", async function () {
+  const db = new FileDB();
+  const users = await db.getCollection<User>(collectionName);
+  users.insertOne({ username: "foo" });
+  assertEquals(
+    await Deno.readTextFile(`${rootDirs[0]}/${collectionName + ext}`),
+    "[]",
+  );
+  await db.save();
+  const rawData = await Deno.readTextFile(
+    `${rootDirs[0]}/${collectionName + ext}`,
+  );
+  const json = JSON.parse(rawData);
+  assertEquals(json[0].username, "foo");
 });
 
-Deno.test("no collections", function() {
-  FileDB.drop("./db");
-  const db = new FileDB("./db");
-  assertEquals(db.getCollectionNames().length, 0);
-  FileDB.drop("./db");
+Deno.test("db: constructor(with rootDir)", async function () {
+  const db = new FileDB({ rootDir: rootDirs[1] });
+  await db.getCollection<User>(collectionName);
+  assertEquals(await exists(`${rootDirs[1]}/${collectionName + ext}`), true);
+});
+
+Deno.test("db: drop", async function () {
+  const db1 = new FileDB({ rootDir: rootDirs[1] });
+  await db1.drop();
+  assertEquals(await exists(rootDirs[1]), false);
+  const db2 = new FileDB();
+  await db2.drop();
+  assertEquals(await exists(rootDirs[0]), false);
 });
