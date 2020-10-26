@@ -1,6 +1,6 @@
 import { assertEquals, exists } from "../deps.ts";
 import { Collection } from "./collection.ts";
-import { DBFileSystem } from "./fs.ts";
+import { FileSystemManager } from "./fsmanager.ts";
 import { Document } from "./types.ts";
 
 interface User extends Document {
@@ -8,7 +8,7 @@ interface User extends Document {
   favourites?: string[];
 }
 
-const collection = new Collection<User>("users", new DBFileSystem());
+const collection = new Collection<User>("users", new FileSystemManager());
 const path = "./db/users.json";
 
 Deno.test("collection: init", async function () {

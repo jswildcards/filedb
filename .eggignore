@@ -1,8 +1,10 @@
+.git/
+.github/
+.vscode/
 .eggignore
-.git
-.github
 .gitignore
-.vscode
+CHANGELOG.md
 CODE_OF_CONDUCT.md
-LICENSE
+CONTRIBUTING.md
 egg.yml
+LICENSE

@@ -1,41 +1,39 @@
 import { uuid } from "../deps.ts";
 import { Document, Selector } from "./types.ts";
-import { DBFileSystem } from "./fs.ts";
+import { FileSystemManager } from "./fsmanager.ts";
 import { Dataset } from "./dataset.ts";
 
 /**
- * A Collection to store data
+ * A collection to store data
+ * @property {string} name - collection name
+ * @property {T[]} data - the collection data stored
+ * @property {FileSystemManager} fsManager - the file system manager of database
  */
 export class Collection<T extends Document> {
   private name = "";
   private data: T[] = [];
-  private fs: DBFileSystem;
+  private fsManager: FileSystemManager;
 
   /**
    * Ensure the collection file is existed. Read the initial
    * data from the file if the file existed.
    * 
    * @constructor
-   * @param name the Collection name
+   * @param {string} name - the Collection name
    */
-  constructor(name: string, fs: DBFileSystem) {
+  constructor(name: string, fsManager: FileSystemManager) {
     this.name = name;
-    this.fs = fs;
+    this.fsManager = fsManager;
   }
 
   async init() {
-    await this.fs.register(this.name);
-    this.data = JSON.parse(await this.fs.read(this.name) || "[]");
-    return this.fs.write(this.name, this.data);
+    await this.fsManager.register(this.name);
+    this.data = JSON.parse(await this.fsManager.read(this.name) || "[]");
+    return this.fsManager.write(this.name, this.data);
   }
 
   /**
    * Find some documents by using filter conditions
-   * 
-   * Caution! The method on this stage is only able to 
-   * find documents with equals properties. For more options
-   * like greater than, less than or equal to, please wait
-   * for newer version
    * 
    * @param selector filter conditions
    * @return the filtered documents
@@ -51,7 +49,11 @@ export class Collection<T extends Document> {
       });
     }));
   }
-
+  /**
+   * Find one document by using filter conditions
+   * @param selector filter conditions
+   * @return the filtered document
+   */
   findOne(selector: Selector<T>) {
     return this.find(selector)?.value()?.[0];
   }
@@ -121,8 +123,8 @@ export class Collection<T extends Document> {
   /**
    * Bulk Update
    * 
-   * @param selector filter condition of documents
-   * @param document the updated document attributes
+   * @param {Selector<T>} selector - filter condition of documents
+   * @param {T} document - the updated document attributes
    * @return the updated documents
    */
   async updateMany(selector: Selector<T>, document: T) {
@@ -138,8 +140,8 @@ export class Collection<T extends Document> {
   /**
    * Delete a document
    * 
-   * @param selector Filter conditions of documents
-   * @return the deleted document ID
+   * @param {Selector<T>} selector Filter conditions of documents
+   * @return {string} the deleted document ID
    */
   async deleteOne(selector: Selector<T>) {
     const document = this.findOne(selector);
@@ -152,8 +154,8 @@ export class Collection<T extends Document> {
   /**
    * Bulk delete
    * 
-   * @param selector Filter conditions of documents
-   * @return the deleted document IDs
+   * @param {Selector<T>} selector - Filter conditions of documents
+   * @return {string[]} the deleted document IDs
    */
   async deleteMany(selector: Selector<T>) {
     const documents = this.find(selector).value();
@@ -167,11 +169,14 @@ export class Collection<T extends Document> {
    * Save a copy of the data snapshot at this point to the file.
    */
   async save() {
-    return this.fs.write(this.name, this.data);
+    return this.fsManager.write(this.name, this.data);
   }
 
+  /**
+   * Autosave data when inserting, updating and deleting data
+   */
   async autosave() {
-    return this.fs.autowrite(this.name, this.data).catch((err) =>
+    return this.fsManager.autowrite(this.name, this.data).catch((err) =>
       Promise.resolve(err)
     );
   }

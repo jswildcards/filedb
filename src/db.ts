@@ -1,29 +1,30 @@
 import { Collection } from "./collection.ts";
 import { Document, FileDBOptions } from "./types.ts";
-import { DBFileSystem } from "./fs.ts";
+import { FileSystemManager } from "./fsmanager.ts";
 
 /**
  * The Database
+ * @class
+ * @property {Record<string, Collection<any>>} collections - collections of database
+ * @property {FileSystemManager} fsManager - the file system manager of database
  */
 export class FileDB {
   private collections: Record<string, Collection<any>> = {};
-  private fs: DBFileSystem;
+  private fsManager: FileSystemManager;
 
   /**
-   * Ensure the data folder is existed.
-   * 
    * @constructor
-   * @param rootDir Optional: the base url of the data folder, default "./db"
+   * @param {FileDBOptions} dbOptions database options
    */
   constructor(dbOptions?: FileDBOptions) {
-    this.fs = new DBFileSystem(dbOptions);
+    this.fsManager = new FileSystemManager(dbOptions);
   }
 
   /**
    * Get a collection
    * 
-   * @param collectionName Collection Name
-   * @template T a type extending Collection Model
+   * @param {string} collectionName - Collection Name
+   * @template T - a type extending Collection Model
    * @return the specified collection
    */
   async getCollection<T extends Document>(collectionName: string) {
@@ -32,7 +33,7 @@ export class FileDB {
     if (!isCollectionExist) {
       this.collections[collectionName] = new Collection<T>(
         collectionName,
-        this.fs,
+        this.fsManager,
       );
       await this.collections[collectionName].init();
     }
@@ -59,11 +60,11 @@ export class FileDB {
   }
 
   /**
-   * Drop a database with the given path
-   * @param rootDir root directory of the database
+   * Drop the database
+   * @param {boolean} silence - silently drop without console.log even cannot find the database
    */
-  async drop(silence: boolean = false) {
-    return this.fs.deregister().catch((err) => {
+  async drop(silence = false) {
+    return this.fsManager.deregister().catch((err) => {
       if (!silence) {
         console.error(err);
       }

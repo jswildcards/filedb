@@ -1,12 +1,12 @@
 import { assertEquals, exists } from "../deps.ts";
-import { DBFileSystem } from "./fs.ts";
+import { FileSystemManager } from "./fsmanager.ts";
 
-const fs = new DBFileSystem();
+const fs = new FileSystemManager();
 const collectionName = "users";
 const dir = "./db";
 
 Deno.test("fs: getInstance", async function () {
-  assertEquals(fs instanceof DBFileSystem, true);
+  assertEquals(fs instanceof FileSystemManager, true);
 });
 
 Deno.test("fs: deregister(dir (not exists))", async function () {
@@ -18,14 +18,14 @@ Deno.test("fs: deregister(dir (not exists))", async function () {
 
 Deno.test("fs: getCollectionFile", function () {
   assertEquals(
-    fs.getCollectionFile(collectionName),
+    fs.getCollectionFilePath(collectionName),
     `${dir}/${collectionName}.json`,
   );
 });
 
 Deno.test("fs: register", async function () {
   await fs.register(collectionName);
-  assertEquals(await exists(fs.getCollectionFile(collectionName)), true);
+  assertEquals(await exists(fs.getCollectionFilePath(collectionName)), true);
 });
 
 Deno.test("fs: read", async function () {
@@ -51,7 +51,7 @@ Deno.test("fs: autowrite(false)", async function () {
 });
 
 Deno.test("fs: autowrite(true)", async function () {
-  const fs2 = new DBFileSystem({ isAutosave: true });
+  const fs2 = new FileSystemManager({ isAutosave: true });
   await fs2.write(collectionName, []);
   await fs2.autowrite(collectionName, [{ username: "foo" }]).catch((
     err,
@@ -67,12 +67,12 @@ Deno.test("fs: deregister(file (not exists))", async function () {
   await fs.deregister(notExists).catch((err) =>
     assertEquals(err, `File "${dir}/${notExists}.json" does not exists`)
   );
-  assertEquals(await exists(fs.getCollectionFile(notExists)), false);
+  assertEquals(await exists(fs.getCollectionFilePath(notExists)), false);
 });
 
 Deno.test("fs: deregister(file (exists))", async function () {
   await fs.deregister(collectionName);
-  assertEquals(await exists(fs.getCollectionFile(collectionName)), false);
+  assertEquals(await exists(fs.getCollectionFilePath(collectionName)), false);
   assertEquals(await exists(dir), true);
 });
 
