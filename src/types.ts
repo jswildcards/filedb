@@ -27,6 +27,12 @@ export interface FileDBOptions {
 export type Selector<T> = T | ((document: T) => boolean | undefined);
 
 /**
+ * Updater updating a document
+ * @typedef {T | ((document: T) => T)} Updater<T>
+ */
+export type Updater<T> = T | ((document: T) => T);
+
+/**
  * A compare function used to sort found documents
  * @typedef {(a: T, b: T) => number} CompareFn<T>
  */

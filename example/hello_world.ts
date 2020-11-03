@@ -33,17 +33,20 @@ await users.insertMany([
   },
 ]);
 
-console.log(users.find((el) => el.lastName?.includes("ba")).value());
+console.log(users.findMany((el) => el.lastName?.includes("ba")).value());
 console.log(users.findOne({ firstName: "fancy" }));
 
 await users.updateOne(
   (el) => el.favourites?.[0] === "🍌 Banana",
   { favourites: ["🍎 Apple", "🍐 Pear"] },
 );
-await users.updateMany(
+(await users.updateMany(
   (el) => el.lastName?.includes("ba"),
-  { favourites: ["🍉 Watermelon"] },
-);
+  (el) => {
+    el.favourites = ["🍉 Watermelon", ...(el.favourites || [])];
+    return el;
+  },
+)).value();
 
 await users.deleteOne({ firstName: "fancy" });
 await users.deleteMany((el) => (el.favourites?.length ?? []) >= 1);

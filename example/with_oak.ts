@@ -1,4 +1,4 @@
-import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak@v6.3.1/mod.ts";
 import { Document, FileDB } from "../mod.ts";
 
 interface User extends Document {
@@ -12,7 +12,7 @@ const router = new Router();
 
 // GET /api/users: Get all users
 router.get("/api/users", (context) => {
-  context.response.body = users.find({});
+  context.response.body = users.findMany({});
 });
 
 // GET /api/users/:id: Get one user by user ID

@@ -1,5 +1,5 @@
 import { uuid } from "../deps.ts";
-import { Document, Selector } from "./types.ts";
+import { Document, Selector, Updater } from "./types.ts";
 import { FileSystemManager } from "./fsmanager.ts";
 import { Dataset } from "./dataset.ts";
 
@@ -38,7 +38,7 @@ export class Collection<T extends Document> {
    * @param selector filter conditions
    * @return the filtered documents
    */
-  find(selector: Selector<T>) {
+  findMany(selector: Selector<T>) {
     if (selector instanceof Function) {
       return new Dataset(this.data.filter(selector));
     }
@@ -55,7 +55,7 @@ export class Collection<T extends Document> {
    * @return the filtered document
    */
   findOne(selector: Selector<T>) {
-    return this.find(selector)?.value()?.[0];
+    return this.findMany(selector)?.value()?.[0];
   }
 
   private insert(document: T) {
@@ -94,12 +94,18 @@ export class Collection<T extends Document> {
     return new Dataset(inserted);
   }
 
-  private update(oldDocument: T, document: T) {
-    const updated = {
-      ...oldDocument,
-      ...document,
-      updatedAt: new Date(),
-    };
+  private update(oldDocument: T, updater: Updater<T>) {
+    let updated: T;
+
+    if (updater instanceof Function) {
+      updated = updater(oldDocument);
+    } else {
+      updated = {
+        ...oldDocument,
+        ...updater,
+        updatedAt: new Date(),
+      };
+    }
     const index = this.data.findIndex(({ id }) => id === updated.id);
     this.data[index] = updated;
     return updated.id;
@@ -109,12 +115,12 @@ export class Collection<T extends Document> {
    * Update a document
    * 
    * @param selector filter condition of documents
-   * @param document the updated document attributes
+   * @param updater the updated document attributes
    * @return the updated document
    */
-  async updateOne(selector: Selector<T>, document: T) {
+  async updateOne(selector: Selector<T>, updater: Updater<T>) {
     const selected = this.findOne(selector);
-    const updatedId = this.update(selected, document);
+    const updatedId = this.update(selected, updater);
     await this.autosave();
 
     return this.findOne({ id: updatedId } as T);
@@ -124,13 +130,13 @@ export class Collection<T extends Document> {
    * Bulk Update
    * 
    * @param {Selector<T>} selector - filter condition of documents
-   * @param {T} document - the updated document attributes
+   * @param {T} updater - the updated document attributes
    * @return the updated documents
    */
-  async updateMany(selector: Selector<T>, document: T) {
-    const selected = this.find(selector);
+  async updateMany(selector: Selector<T>, updater: Updater<T>) {
+    const selected = this.findMany(selector);
     const updatedIds = selected.value().map((oldDocument: T) =>
-      this.update(oldDocument, document)
+      this.update(oldDocument, updater)
     );
     await this.autosave();
 
@@ -158,7 +164,7 @@ export class Collection<T extends Document> {
    * @return {string[]} the deleted document IDs
    */
   async deleteMany(selector: Selector<T>) {
-    const documents = this.find(selector).value();
+    const documents = this.findMany(selector).value();
     this.data = this.data.filter((el) => !documents.includes(el));
     await this.autosave();
 

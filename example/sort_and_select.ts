@@ -36,30 +36,22 @@ users.insertMany([
 ]);
 
 // Test 1: Sort by number of favourites
-const value1 = users.find({}).sort(compareFavourites).select(["username"])
+const value1 = users.findMany({}).sort(compareFavourites).select(["username"])
   .value();
 
 console.log(value1); // "baz", "bar", "foo"
 
 // Test 2: First sort by number of favourites, then sort by username
-const value2 = users.find({}).sort((a, b) => {
-  const compareResult = compareFavourites(a, b);
-  if (compareResult) {
-    return compareResult;
-  }
-  return compareUsername(a, b);
-}).select(["username"]).value();
+const value2 = users.findMany({}).sort((a, b) =>
+  compareFavourites(a, b) || compareUsername(a, b)
+).select(["username"]).value();
 
 console.log(value2); // "bar", "baz", "foo"
 
 // Test 3: First sort by number of favourites in DECENDING order, then sort by username
-const value3 = users.find({}).sort((a, b) => {
-  const compareResult = -compareFavourites(a, b);
-  if (compareResult) {
-    return compareResult;
-  }
-  return compareUsername(a, b);
-}).select(["username"]).value();
+const value3 = users.findMany({}).sort((a, b) =>
+  -compareFavourites(a, b) || compareUsername(a, b)
+).select(["username"]).value();
 
 console.log(value3); // "foo", "bar", "baz"
 

@@ -17,8 +17,8 @@ Deno.test("collection: init", async function () {
   assertEquals(await Deno.readTextFile(path), "[]");
 });
 
-Deno.test("collection: find(empty)", function () {
-  assertEquals(collection.find({}).value().length, 0);
+Deno.test("collection: findMany(empty)", function () {
+  assertEquals(collection.findMany({}).value().length, 0);
 });
 
 Deno.test("collection: findOne(empty)", function () {
@@ -29,13 +29,13 @@ Deno.test("collection: insertOne", async function () {
   await collection.insertOne(
     { username: "foo", favourites: ["🍎 Apple", "🍐 Pear"] },
   );
-  assertEquals(collection.find({}).value().length, 1);
-  assertEquals(collection.find({}).value()?.[0]?.username, "foo");
+  assertEquals(collection.findMany({}).value().length, 1);
+  assertEquals(collection.findMany({}).value()?.[0]?.username, "foo");
 });
 
-Deno.test("collection: find(not empty (function))", async function () {
+Deno.test("collection: findMany(not empty (function))", async function () {
   assertEquals(
-    collection.find((el) => el.username === "foo").value().length,
+    collection.findMany((el) => el.username === "foo").value().length,
     1,
   );
 });
@@ -54,9 +54,9 @@ Deno.test("collection: insertMany", async function () {
       { username: "baz", favourites: ["🍌 Banana"] },
     ],
   );
-  assertEquals(collection.find({}).value().length, 3);
+  assertEquals(collection.findMany({}).value().length, 3);
   assertEquals(
-    collection.find((el) => el.username?.includes("ba")).value().length,
+    collection.findMany((el) => el.username?.includes("ba")).value().length,
     2,
   );
 });
@@ -67,7 +67,7 @@ Deno.test("collection: updateOne", async function () {
     { favourites: ["🍎 Apple", "🍐 Pear"] },
   );
   assertEquals(
-    collection.find((el) => el.favourites?.includes("🍎 Apple")).value().length,
+    collection.findMany((el) => el.favourites?.includes("🍎 Apple")).value().length,
     2,
   );
 });
@@ -75,10 +75,16 @@ Deno.test("collection: updateOne", async function () {
 Deno.test("collection: updateMany", async function () {
   await collection.updateMany(
     (el) => el.username?.includes("ba"),
-    { favourites: ["🍉 Watermelon"] },
+    (el) => {
+      el.favourites = ["🍉 Watermelon", ...(el.favourites || [])];
+      return el;
+    },
+  );
+  console.log(
+    collection.findMany((el) => el.favourites?.[0] === "🍉 Watermelon").value(),
   );
   assertEquals(
-    collection.find((el) => el.favourites?.includes("🍉 Watermelon")).value()
+    collection.findMany((el) => el.favourites?.[0] === "🍉 Watermelon").value()
       .length,
     2,
   );
@@ -86,10 +92,10 @@ Deno.test("collection: updateMany", async function () {
 
 Deno.test("collection: deleteOne", async function () {
   await collection.deleteOne((el) => el.username?.includes("ba"));
-  assertEquals(collection.find({}).value().length, 2);
+  assertEquals(collection.findMany({}).value().length, 2);
 });
 
 Deno.test("collection: deleteMany", async function () {
   await collection.deleteMany((el) => (el.favourites?.length ?? []) >= 1);
-  assertEquals(collection.find({}).value().length, 0);
+  assertEquals(collection.findMany({}).value().length, 0);
 });
