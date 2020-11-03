@@ -13,7 +13,7 @@ const ext = ".json";
 Deno.test("db: getCollection", async function () {
   const db = new FileDB();
   const collection = await db.getCollection<User>(collectionName);
-  assertEquals(collection.find({}).value(), []);
+  assertEquals(collection.findMany({}).value(), []);
   assertEquals(await exists(`${rootDirs[0]}/${collectionName + ext}`), true);
 });
 

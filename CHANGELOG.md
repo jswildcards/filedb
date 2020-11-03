@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - hello_world example to use the new functions.
 - README example to use the new functions.
+- collection function "find" refactor to "findMany".
 
 ## [0.0.5] - 2020-10-26
 ### Added
