@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - data can now be updated using a updater function.
+- README added `Permission Required` section to clearly state which flags are needed to be applied.
 ### Changed
 - hello_world example to use the new functions.
 - README example to use the new functions.
+- README `Usage` section changed to `Getting Started` section, to illustrate the whole idea step by step.
 - collection function "find" refactor to "findMany".
 
 ## [0.0.5] - 2020-10-26
